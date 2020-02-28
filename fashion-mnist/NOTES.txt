@@ -1,0 +1,10 @@
+Status: wip
+
+NOTES:
+
+Lambda
+
+1. Environment variables - add SageMaker endpoint name
+2. Execution Role - use 'predictor-dev' which has full access to SageMaker
+
+
