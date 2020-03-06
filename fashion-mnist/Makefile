@@ -1,6 +1,7 @@
 install:
 	pip install virtualenv
 	pip install chalice opencv-python
+	pip install Pillow
 .PHONY: install
 
 create:
