@@ -1,14 +1,13 @@
 from chalice import Chalice
-from chalice import BadRequestError
-
-import base64, cv2, os, sys
+from chalice import BadRequestError 
+import os, sys
 import boto3
 import json 
 import numpy as np
  
 from PIL import Image 
 from io import BytesIO
-#import requests
+
 
 app = Chalice(app_name='fashion-mnist')
 app.debug = True 
@@ -34,7 +33,43 @@ class NumpyArrayEncoder(json.JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
+ 
+def classify(predictions):
+    # It looks like a 2-D array, let's check its shape
+    pred = np.array(predictions['predictions'])
+    print("Pred:{}".format(pred))
 
+    # # This is the N x K output array from the model
+    # # pred[n,k] is the probability that we believe the nth sample belongs to the kth class
+
+    # # Get the predicted classes
+    pred = pred.argmax(axis=1)
+    print("Pred argmax:{}".format(pred))
+
+    print("Predicted label: {}".format(labels[pred[0]])) 
+
+    return labels[pred[0]]
+
+def predict(data):
+    try:
+        endpoint = os.environ['ENDPOINT_NAME']
+    except:
+        endpoint = default_endpoint_name
+
+    print("++++ endpoint:\n{}".format(endpoint))
+ 
+    try: 
+        
+        response = runtime.invoke_endpoint(EndpointName=endpoint, ContentType='application/json', Body=data) 
+        preds = response['Body'].read().decode()  # byte array
+        print("+++++ response:\n{}".format(preds)) 
+        return classify(preds) 
+       
+    except:
+
+        return sys.exc_info()[0] 
+
+    
 @app.route('/', methods=['POST'],  content_types=['image/jpeg','image/jpg','image/png'], cors=True)
 def index():
  
@@ -43,14 +78,17 @@ def index():
     print("Image size: {}".format(image.size))  
     
     if image.size != (28,28):
+        return {'response': "Error: image must be a size of 28 x 28 pix not " + str(image.shape)}
         
         # transform colored image to grayscale
-        image = np.mean(image, axis=2)
-        print("Shape after grayscale conversion: {}".format(image.shape))
-        image = cv2.resize(image, (28,28) )
-        print("Resized Image size: {}".format(image.size))
-        print(image.shape)
-     
+        # image = np.mean(image, axis=2)
+        # print("Shape after grayscale conversion: {}".format(image.shape))
+        # image = cv2.resize(image, (28,28) )
+        # print("Resized Image size: {}".format(image.size))
+        # print(image.shape)
+
+    # transform colored image to grayscale
+    #image = np.mean(image, axis=2)
     imagearr = np.asarray(image)
     imagearr = imagearr / 255.0
    
@@ -60,76 +98,14 @@ def index():
     # data = json.dumps({"signature_name": "serving_default", "instances": imagearr }, cls=NumpyArrayEncoder)
     # return {'response': data }
 
-
-
     data = json.dumps({"signature_name": "serving_default", "instances": imagearr }, cls=NumpyArrayEncoder)
+    #print(data) 
+
+    # # call aws lambda requires import boto3 not requests
+    pred = predict(data) 
     
-    print(data)
-
-    # headers = {"content-type": "application/json"} 
-    # r = requests.post('http://localhost:8080/invocations', data=data, headers=headers)
-    # j = r.json()
-    # #print(j.keys())
-    # #print(j)
-
-    # # It looks like a 2-D array, let's check its shape
-    # pred = np.array(j['predictions'])
-     
-    # # This is the N x K output array from the model
-    # # pred[n,k] is the probability that we believe the nth sample belongs to the kth class
-
-    # # Get the predicted classes
-    # pred = pred.argmax(axis=1)
-
-    # # Map them back to strings
-    # pred = [labels[i] for i in pred]
-    # print("Predicted label: {}".format(pred)) 
-
-    # return {'response': pred}
-
-
-
-
-    # if 'ENDPOINT_NAME' not in os.environ:         
-    #     return {'response': 'Missing endpoint'}
-    #     #raise BadRequestError('Missing endpoint')
+    print("Predictions: {}".format(pred))
     
-    try:
-        endpoint = os.environ['ENDPOINT_NAME']
-    except:
-        endpoint = default_endpoint_name
-
-    # if 'ENDPOINT_NAME' not in os.environ: 
-    #     endpoint = default_endpoint_name
-
-    print("++++ endpoint:\n{}".format(endpoint))
- 
-    try: 
-        
-        response = runtime.invoke_endpoint(EndpointName=endpoint, ContentType='application/json', Body=data) 
-        preds = response['Body'].read().decode()  # byte array
-        print("+++++ response:\n{}".format(preds))
- 
-        j =  json.loads(preds)
-        print(j.keys())
-        print(j)
-
-        # It looks like a 2-D array, let's check its shape
-        pred = np.array(j['predictions'])
-        print("Pred:{}".format(pred))
-
-        # # This is the N x K output array from the model
-        # # pred[n,k] is the probability that we believe the nth sample belongs to the kth class
-
-        # # Get the predicted classes
-        pred = pred.argmax(axis=1)
-        print("Pred argmax:{}".format(pred))
-
-        print("Predicted label: {}".format(labels[pred[0]])) 
-
-        return {'response': labels[pred[0]]}
-    except:
-
-        return {'response': sys.exc_info()[0]} 
-
+    # convert to json before return
+    return json.dumps({'response': pred}) 
     
