@@ -8,7 +8,8 @@ import numpy as np
  
 from PIL import Image 
 from io import BytesIO
-file_name = 'images/24.jpg'
+#file_name = 'images/24.jpg'
+file_name = 'images/51.jpg'
 endpoint_name='mnist-notebook-v1'
 
 # Label mapping

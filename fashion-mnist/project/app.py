@@ -2,6 +2,7 @@ from chalice import Chalice
 from chalice import BadRequestError 
 import os, sys
 import boto3
+from botocore.exceptions import ClientError
 import json 
 import numpy as np
  
@@ -26,7 +27,7 @@ Sneaker
 Bag
 Ankle boot'''.split("\n")
 
-runtime = boto3.Session().client(service_name='sagemaker-runtime', region_name='us-east-1')
+
 
 class NumpyArrayEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -59,12 +60,15 @@ def predict(data):
     print("++++ endpoint:\n{}".format(endpoint))
  
     try: 
-        
+        runtime = boto3.Session().client(service_name='sagemaker-runtime', region_name='us-east-1')
         response = runtime.invoke_endpoint(EndpointName=endpoint, ContentType='application/json', Body=data) 
         preds = response['Body'].read().decode()  # byte array
         print("+++++ response:\n{}".format(preds)) 
         return classify(preds) 
-       
+    except ClientError as e:
+        #if e.response['Error']['Code'] == 'InvalidObjectState':
+        print(e.response['Error'])
+        return e.response['Error']     
     except:
 
         return sys.exc_info()[0] 
@@ -105,7 +109,7 @@ def index():
     pred = predict(data) 
     
     print("Predictions: {}".format(pred))
-    
+
     # convert to json before return
-    return json.dumps({'response': pred}) 
+    return {'response': pred}
     
