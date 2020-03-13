@@ -2,7 +2,11 @@ install:
 	pip install virtualenv
 	pip install chalice opencv-python
 	pip install Pillow
+	pip install boto3
+	pip install numpy
+	pip install opencv-python
 .PHONY: install
+
 
 create:
 	virtualenv ~/.virtualenvs/chalice-fashion-mnist

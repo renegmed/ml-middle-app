@@ -1,5 +1,6 @@
 
-export URL=<AWS lambda gateway api here>
+#export URL=https://hzu27pbk74.execute-api.us-east-1.amazonaws.com/api/
+export URL=http://localhost:8000/
 export PIC='images/meters2.jpeg'  # working
 export PIC_1='images/24.jpg'    # working
 export PIC_2='images/57.jpg'    # working
