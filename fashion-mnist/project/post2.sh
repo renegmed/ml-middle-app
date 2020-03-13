@@ -9,4 +9,4 @@ export ENDPOINT_NAME='fake_endpoint'
 
 #(echo '{"data": "'; base64 $PIC; echo '", "height": 28 , "width": 28}') | curl -X POST -H "Content-Type: application/json" -d @-  $URL
 
-curl -X POST -H 'Accept: image/jpeg' -H 'Content-Type: image/jpeg' --data-binary @$PIC_3 $URL  
+curl -X POST -H 'Accept: image/jpeg' -H 'Content-Type: image/jpeg' --data-binary @$PIC_1 $URL  
